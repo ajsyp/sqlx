@@ -177,12 +177,15 @@ async fn establish(stream: &mut MySqlStream, url: &Url) -> crate::Result<()> {
     let auth_response =
         make_auth_response(stream, &auth_plugin, password, &auth_plugin_data).await?;
 
+    let username = url.username().unwrap_or("root");
+    let username = percent_encoding::percent_decode_str(username).decode_utf8_lossy();
+    let username = username.as_ref();
     stream
         .send(
             HandshakeResponse {
                 client_collation: COLLATE_UTF8MB4_UNICODE_CI,
                 max_packet_size: MAX_PACKET_SIZE,
-                username: &url.username().unwrap_or(Cow::Borrowed("root")),
+                username,
                 database: url.database(),
                 auth_plugin: &auth_plugin,
                 auth_response: &auth_response,
